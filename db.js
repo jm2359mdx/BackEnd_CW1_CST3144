@@ -5,8 +5,8 @@ const uri = process.env.MONGO_URI; // set this in your .env, NOT in code
 const options = {
   // Recommended stable API options (optional)
   serverApi: {
-    version: "1"
-  }
+    version: "1",
+  },
 };
 
 let client;

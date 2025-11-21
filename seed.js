@@ -1,7 +1,6 @@
 // seed.js
-import 'dotenv/config';
+import "dotenv/config";
 import { connectDB, getDB, closeDB } from "./db.js";
-
 
 const lessons = [
   { subject: "Math", location: "London", price: 15, spaces: 8 },
@@ -13,7 +12,7 @@ const lessons = [
   { subject: "Coding", location: "London", price: 22, spaces: 5 },
   { subject: "Robotics", location: "Cardiff", price: 25, spaces: 5 },
   { subject: "Drama", location: "Leeds", price: 11, spaces: 5 },
-  { subject: "History", location: "Manchester", price: 14, spaces: 5 }
+  { subject: "History", location: "Manchester", price: 14, spaces: 5 },
 ];
 
 async function run() {

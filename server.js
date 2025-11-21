@@ -1,12 +1,11 @@
 // server.js
-import 'dotenv/config';
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { connectDB, getDB, closeDB } from "./db.js";
 import logger from "./middleware/logger.js";
 import staticFiles from "./middleware/static.js";
 import { ObjectId } from "mongodb";
-
 
 const app = express();
 app.use(cors());
@@ -15,12 +14,11 @@ app.use(express.json());
 // sanitize incoming req.url (remove trailing CR/LF characters)
 app.use((req, res, next) => {
   // remove trailing CR or LF characters from the raw url
-  if (typeof req.url === 'string') {
-    req.url = req.url.replace(/[\r\n]+$/g, '');
+  if (typeof req.url === "string") {
+    req.url = req.url.replace(/[\r\n]+$/g, "");
   }
   next();
 });
-
 
 app.use(logger);
 app.use("/images", staticFiles);
@@ -45,7 +43,13 @@ app.post("/orders", async (req, res) => {
     const db = getDB();
     const order = req.body;
     // basic validation (extend as needed)
-    if (!order || !order.name || !order.phone || !Array.isArray(order.items) || order.items.length === 0) {
+    if (
+      !order ||
+      !order.name ||
+      !order.phone ||
+      !Array.isArray(order.items) ||
+      order.items.length === 0
+    ) {
       return res.status(400).json({ error: "Invalid order payload" });
     }
     const result = await db.collection("orders").insertOne(order);
@@ -75,7 +79,9 @@ app.put("/lessons/:id", async (req, res) => {
       return res.status(400).json({ error: "No update payload provided" });
     }
 
-    const result = await db.collection("lessons").updateOne(filter, { $set: update });
+    const result = await db
+      .collection("lessons")
+      .updateOne(filter, { $set: update });
     res.json({ matched: result.matchedCount, modified: result.modifiedCount });
   } catch (err) {
     console.error("PUT /lessons/:id error:", err);

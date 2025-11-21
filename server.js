@@ -1,4 +1,5 @@
 // server.js
+import 'dotenv/config';
 import express from "express";
 import cors from "cors";
 import { connectDB, getDB, closeDB } from "./db.js";
@@ -6,9 +7,21 @@ import logger from "./middleware/logger.js";
 import staticFiles from "./middleware/static.js";
 import { ObjectId } from "mongodb";
 
+
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// sanitize incoming req.url (remove trailing CR/LF characters)
+app.use((req, res, next) => {
+  // remove trailing CR or LF characters from the raw url
+  if (typeof req.url === 'string') {
+    req.url = req.url.replace(/[\r\n]+$/g, '');
+  }
+  next();
+});
+
+
 app.use(logger);
 app.use("/images", staticFiles);
 

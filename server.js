@@ -9,11 +9,10 @@ import { ObjectId } from "mongodb";
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "10kb" })); // prevent huge bodies
 
-// sanitize incoming req.url (remove trailing CR/LF characters)
+// sanitize incoming req.url (removes stray CR/LF so Postman works)
 app.use((req, res, next) => {
-  // remove trailing CR or LF characters from the raw url
   if (typeof req.url === "string") {
     req.url = req.url.replace(/[\r\n]+$/g, "");
   }
@@ -23,9 +22,11 @@ app.use((req, res, next) => {
 app.use(logger);
 app.use("/images", staticFiles);
 
-// --- routes ---
+//
+// ------------------------ ROUTES ------------------------
+//
 
-// GET /lessons
+// GET /lessons  (required by Coursework)
 app.get("/lessons", async (req, res) => {
   try {
     const db = getDB();
@@ -37,60 +38,117 @@ app.get("/lessons", async (req, res) => {
   }
 });
 
-// POST /orders
+
+// ------------------------ SEARCH ROUTE ------------------------
+// GET /search?q=term
+app.get("/search", async (req, res) => {
+  try {
+    const q = String(req.query.q || "").trim();
+
+    const db = getDB();
+
+    // If empty search → return all lessons
+    if (!q) {
+      const lessons = await db.collection("lessons").find().toArray();
+      return res.json(lessons);
+    }
+
+    // Escape regex special characters
+    const safe = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(safe, "i");
+
+    // Allow numeric search for price/spaces if q is number-like
+    const asNumber = Number(q);
+    const isNumeric = !Number.isNaN(asNumber);
+
+    const or = [
+      { subject: { $regex: regex } },
+      { location: { $regex: regex } }
+    ];
+
+    if (isNumeric) {
+      or.push({ price: asNumber });
+      or.push({ spaces: asNumber });
+    }
+
+    const results = await db.collection("lessons").find({ $or: or }).toArray();
+    return res.json(results);
+
+  } catch (err) {
+    console.error("GET /search error:", err);
+    res.status(500).json({ error: "Search failed" });
+  }
+});
+
+
+// ------------------------ POST ORDER ------------------------
+// POST /orders (required by Coursework)
 app.post("/orders", async (req, res) => {
   try {
     const db = getDB();
     const order = req.body;
-    // basic validation (extend as needed)
+
+    // Very basic validation
     if (
       !order ||
-      !order.name ||
-      !order.phone ||
+      typeof order.name !== "string" ||
+      typeof order.phone !== "string" ||
       !Array.isArray(order.items) ||
       order.items.length === 0
     ) {
       return res.status(400).json({ error: "Invalid order payload" });
     }
+
     const result = await db.collection("orders").insertOne(order);
     res.json({ insertedId: result.insertedId });
+
   } catch (err) {
     console.error("POST /orders error:", err);
     res.status(500).json({ error: "Failed to create order" });
   }
 });
 
-// PUT /lessons/:id  (update any lesson fields; typically used to update spaces)
+
+// ------------------------ UPDATE LESSON ------------------------
+// PUT /lessons/:id (required by Coursework)
 app.put("/lessons/:id", async (req, res) => {
   try {
     const db = getDB();
     const id = req.params.id;
-    // accept either ObjectId or string ids depending on how you seeded lessons
+
+    // Try to convert to ObjectId
     let filter;
     try {
       filter = { _id: new ObjectId(id) };
-    } catch (e) {
-      // if id is not a valid ObjectId, fall back to string match
+    } catch {
       filter = { _id: id };
     }
 
     const update = req.body;
-    if (!update || Object.keys(update).length === 0) {
-      return res.status(400).json({ error: "No update payload provided" });
+
+    if (!update || typeof update !== "object") {
+      return res.status(400).json({ error: "Invalid update payload" });
     }
 
-    const result = await db
-      .collection("lessons")
+    const result = await db.collection("lessons")
       .updateOne(filter, { $set: update });
-    res.json({ matched: result.matchedCount, modified: result.modifiedCount });
+
+    res.json({
+      matched: result.matchedCount,
+      modified: result.modifiedCount
+    });
+
   } catch (err) {
     console.error("PUT /lessons/:id error:", err);
     res.status(500).json({ error: "Failed to update lesson" });
   }
 });
 
-// start server after DB is ready
+
+//
+// --------------------- START SERVER ---------------------
 const PORT = process.env.PORT || 3000;
+
 connectDB()
   .then(() => {
     const server = app.listen(PORT, () => {

@@ -1,7 +1,9 @@
 // seed.js
+// load env + db helpers
 import "dotenv/config";
 import { connectDB, getDB, closeDB } from "./db.js";
 
+// sample lessons for initial database state
 const lessons = [
   { subject: "Math", location: "London", price: 15, spaces: 8 },
   { subject: "English", location: "Leeds", price: 12, spaces: 5 },
@@ -12,26 +14,29 @@ const lessons = [
   { subject: "Coding", location: "London", price: 22, spaces: 5 },
   { subject: "Robotics", location: "Cardiff", price: 25, spaces: 5 },
   { subject: "Drama", location: "Leeds", price: 11, spaces: 5 },
-  { subject: "History", location: "Manchester", price: 14, spaces: 5 },
+  { subject: "History", location: "Manchester", price: 14, spaces: 5 }
 ];
 
 async function run() {
   try {
+    // connect to database
     await connectDB();
     const db = getDB();
 
-    // Clear the old lessons collection
+    // reset lessons collection
     await db.collection("lessons").deleteMany({});
 
-    // Insert the new lessons
+    // insert fresh dataset
     const result = await db.collection("lessons").insertMany(lessons);
 
     console.log("Inserted lessons:", result.insertedCount);
   } catch (err) {
     console.error(err);
   } finally {
+    // close db connection
     await closeDB();
   }
 }
 
+// run seeding
 run();

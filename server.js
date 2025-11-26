@@ -1,17 +1,31 @@
-// server.js
+// core imports
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import { connectDB, getDB, closeDB } from "./db.js";
+import {
+  // connect database and start server
+  connectDB,
+  getDB,
+  closeDB,
+} from "./db.js";
 import logger from "./middleware/logger.js";
 import staticFiles from "./middleware/static.js";
 import { ObjectId } from "mongodb";
 
+// create server app
 const app = express();
-app.use(cors());
-app.use(express.json({ limit: "10kb" })); // prevent huge bodies
 
-// sanitize incoming req.url (removes stray CR/LF so Postman works)
+/* essential note */
+
+// CORS + JSON body parsing (small body limit to guard against large payloads).
+// enable cors for client requests
+app.use(cors());
+app.use(
+  // parse json bodies
+  express.json({ limit: "10kb" })
+);
+
+// Trim stray CR/LF from incoming URLs to avoid routing issues from some clients.
 app.use((req, res, next) => {
   if (typeof req.url === "string") {
     req.url = req.url.replace(/[\r\n]+$/g, "");
@@ -19,14 +33,18 @@ app.use((req, res, next) => {
   next();
 });
 
+// Simple request logger applied globally so all routes are visible in server logs.
+// log each request
 app.use(logger);
+
+// Serve lesson images from /images. Returns JSON 404 when file is missing (coursework requirement).
+// serve lesson images
 app.use("/images", staticFiles);
 
-//
 // ------------------------ ROUTES ------------------------
-//
 
-// GET /lessons  (required by Coursework)
+// Return all lessons used by the front-end list and as a fallback for empty searches.
+// fetch all lessons
 app.get("/lessons", async (req, res) => {
   try {
     const db = getDB();
@@ -38,57 +56,52 @@ app.get("/lessons", async (req, res) => {
   }
 });
 
-
-// ------------------------ SEARCH ROUTE ------------------------
-// GET /search?q=term
+// Server-side search for subject/location and numeric fields (price / spaces). Empty q returns all.
+// search lessons
 app.get("/search", async (req, res) => {
   try {
     const q = String(req.query.q || "").trim();
-
     const db = getDB();
 
-    // If empty search → return all lessons
     if (!q) {
       const lessons = await db.collection("lessons").find().toArray();
       return res.json(lessons);
     }
 
-    // Escape regex special characters
     const safe = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const regex = new RegExp(safe, "i");
 
-    // Allow numeric search for price/spaces if q is number-like
     const asNumber = Number(q);
     const isNumeric = !Number.isNaN(asNumber);
 
     const or = [
       { subject: { $regex: regex } },
-      { location: { $regex: regex } }
+      { location: { $regex: regex } },
     ];
 
     if (isNumeric) {
+      // Check both `spaces` and `space` for robustness against dataset naming.
       or.push({ price: asNumber });
       or.push({ spaces: asNumber });
+      or.push({ space: asNumber });
     }
 
     const results = await db.collection("lessons").find({ $or: or }).toArray();
     return res.json(results);
-
   } catch (err) {
     console.error("GET /search error:", err);
     res.status(500).json({ error: "Search failed" });
   }
 });
 
-
-// ------------------------ POST ORDER ------------------------
-// POST /orders (required by Coursework)
+// Receive an order payload and persist it to the orders collection.
+// save new order
 app.post("/orders", async (req, res) => {
   try {
     const db = getDB();
     const order = req.body;
 
-    // Very basic validation
+    // Basic validation to ensure required fields are present.
     if (
       !order ||
       typeof order.name !== "string" ||
@@ -101,22 +114,19 @@ app.post("/orders", async (req, res) => {
 
     const result = await db.collection("orders").insertOne(order);
     res.json({ insertedId: result.insertedId });
-
   } catch (err) {
     console.error("POST /orders error:", err);
     res.status(500).json({ error: "Failed to create order" });
   }
 });
 
-
-// ------------------------ UPDATE LESSON ------------------------
-// PUT /lessons/:id (required by Coursework)
+// Update any fields of a lesson document using $set; accepts ObjectId or string id.
+// update lesson by id
 app.put("/lessons/:id", async (req, res) => {
   try {
     const db = getDB();
     const id = req.params.id;
 
-    // Try to convert to ObjectId
     let filter;
     try {
       filter = { _id: new ObjectId(id) };
@@ -125,27 +135,21 @@ app.put("/lessons/:id", async (req, res) => {
     }
 
     const update = req.body;
-
     if (!update || typeof update !== "object") {
       return res.status(400).json({ error: "Invalid update payload" });
     }
 
-    const result = await db.collection("lessons")
+    const result = await db
+      .collection("lessons")
       .updateOne(filter, { $set: update });
 
-    res.json({
-      matched: result.matchedCount,
-      modified: result.modifiedCount
-    });
-
+    res.json({ matched: result.matchedCount, modified: result.modifiedCount });
   } catch (err) {
     console.error("PUT /lessons/:id error:", err);
     res.status(500).json({ error: "Failed to update lesson" });
   }
 });
 
-
-//
 // --------------------- START SERVER ---------------------
 const PORT = process.env.PORT || 3000;
 
@@ -155,7 +159,6 @@ connectDB()
       console.log(`Server running on port ${PORT}`);
     });
 
-    // graceful shutdown
     const shutdown = async () => {
       console.log("Shutting down server...");
       server.close();

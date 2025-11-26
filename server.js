@@ -17,9 +17,34 @@ const app = express();
 
 /* essential note */
 
-// CORS + JSON body parsing (small body limit to guard against large payloads).
-// enable cors for client requests
-app.use(cors());
+// CORS: allow GH Pages frontend and Render backend, handle preflight quickly.
+// permit requests without Origin (curl, server-to-server)
+const allowedOrigins = [
+  "https://jm2359mdx.github.io",
+  "https://jm2359mdx.github.io/FrontEnd_CW1_CST3144",
+  // backend origin (useful if the frontend ever calls the API from same host)
+  "https://backend-cw1-cst3144-1.onrender.com",
+];
+
+// apply CORS middleware with explicit origin check
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // allow requests with no origin (e.g., server-side, curl)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      // deny other origins
+      return callback(new Error("CORS not allowed"), false);
+    },
+    methods: ["GET", "POST", "PUT", "OPTIONS"],
+    allowedHeaders: ["Content-Type"],
+  })
+);
+
+// respond to preflight for all routes
+app.options("*", cors());
+
+// JSON body parsing (small body limit to guard against large payloads).
 app.use(
   // parse json bodies
   express.json({ limit: "10kb" })

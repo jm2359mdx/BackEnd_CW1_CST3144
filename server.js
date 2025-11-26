@@ -151,7 +151,7 @@ app.put("/lessons/:id", async (req, res) => {
 });
 
 // --------------------- START SERVER ---------------------
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 3000;
 
 connectDB()
   .then(() => {

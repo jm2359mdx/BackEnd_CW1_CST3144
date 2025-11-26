@@ -42,7 +42,7 @@ app.use(
 );
 
 // respond to preflight for all routes
-app.options("*", cors());
+app.options("/*", cors());
 
 // JSON body parsing (small body limit to guard against large payloads).
 app.use(

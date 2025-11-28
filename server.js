@@ -40,8 +40,6 @@ app.use(cors({
   optionsSuccessStatus: 204
 }));
 
-// ensure OPTIONS preflight responses are handled
-app.options('*', cors());
 
 
 // JSON body parsing (small body limit to guard against large payloads).

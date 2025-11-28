@@ -171,12 +171,12 @@ Content-Type: application/json
 - [x] Express.js REST API
 - [x] Native MongoDB driver
 - [x] Hosted on Render
-- [x] Logger middleware (4%)
-- [x] Static files middleware (4%)
-- [x] GET /lessons (3%)
-- [x] POST /orders (4%)
-- [x] PUT /lessons/:id (5%)
-- [x] Full backend search (7%)
+- [x] Logger middleware 
+- [x] Static files middleware
+- [x] GET /lessons 
+- [x] POST /orders 
+- [x] PUT /lessons/:id 
+- [x] Full backend search 
 
 ---
 
@@ -184,3 +184,4 @@ Content-Type: application/json
 
 This backend is designed to work seamlessly with the LearnEase Vue.js frontend.  
 All endpoints follow REST conventions and return JSON responses.
+

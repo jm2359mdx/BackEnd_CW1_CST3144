@@ -27,19 +27,20 @@ const allowedOrigins = [
 ];
 
 // apply CORS middleware with explicit origin check
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true); // allow curl/Postman/server-to-server
-    if (allowed.includes(origin)) return callback(null, true);
-   
-    return callback(new Error('CORS not allowed'), false);
-  },
-  methods: ["GET","HEAD","PUT","PATCH","POST","DELETE","OPTIONS"],
-  allowedHeaders: ["Content-Type","Authorization","Accept"],
-  credentials: false, // set true if you need cookies/auth; then origin cannot be '*'
-  optionsSuccessStatus: 204
-}));
-
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // allow requests with no origin (e.g., server-side, curl)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      // deny other origins
+      return callback(new Error("CORS not allowed"), false);
+    },
+    methods: ["GET", "POST", "PUT", "OPTIONS"],
+    allowedHeaders: ["Content-Type"],
+    credentials: true,
+  })
+);
 
 
 // JSON body parsing (small body limit to guard against large payloads).

@@ -26,21 +26,42 @@ const allowedOrigins = [
   "https://backend-cw1-cst3144-1.onrender.com",
 ];
 
-// apply CORS middleware with explicit origin check
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // allow requests with no origin (e.g., server-side, curl)
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) return callback(null, true);
-      // deny other origins
-      return callback(new Error("CORS not allowed"), false);
-    },
-    methods: ["GET", "POST", "PUT", "OPTIONS"],
-    allowedHeaders: ["Content-Type"],
-    credentials: true,
-  })
-);
+
+
+const envOrigins = (process.env.ALLOWED_ORIGINS || "")
+  .split(",")
+  .map(s => s.trim())
+  .filter(Boolean);
+
+// Dev-friendly defaults when NODE_ENV !== "production"
+if (process.env.NODE_ENV !== "production") {
+  envOrigins.push("http://localhost:5173", "http://localhost:3000");
+}
+
+// Example: ALLOWED_ORIGINS="https://jm2359mdx.github.io,https://jm2359mdx.github.io/FrontEnd_CW1_CST3144,https://backend-cw1-cst3144-1.onrender.com"
+// const allowedOrigins = Array.from(new Set(envOrigins));
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // allow requests with no origin (curl, server-to-server)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    // don't throw an error here (that becomes a 500). Instead deny the origin:
+    return callback(null, false);
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  optionsSuccessStatus: 204, // older browsers like IE11
+  credentials: false, // set true only if you need cookies/auth and then don't use '*' origin
+};
+
+app.use(cors(corsOptions));
+// ensure preflight is handled with the same options
+app.options("*", cors(corsOptions));
 
 
 // JSON body parsing (small body limit to guard against large payloads).

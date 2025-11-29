@@ -56,12 +56,11 @@ const corsOptions = {
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   optionsSuccessStatus: 204, // older browsers like IE11
-  credentials: false, // set true only if you need cookies/auth and then don't use '*' origin
+  credentials: true, // set true only if you need cookies/auth and then don't use '*' origin
 };
 
 app.use(cors(corsOptions));
 // ensure preflight is handled with the same options
-app.options("*", cors(corsOptions));
 
 
 // JSON body parsing (small body limit to guard against large payloads).

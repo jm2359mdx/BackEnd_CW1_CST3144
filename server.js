@@ -15,23 +15,11 @@ import { ObjectId } from "mongodb";
 // create server app
 const app = express();
 
-/* essential note */
-
-// CORS: allow GH Pages frontend and Render backend, handle preflight quickly.
-// permit requests without Origin (curl, server-to-server)
-const allowedOrigins = [
-  "https://jm2359mdx.github.io",
-  "https://jm2359mdx.github.io/FrontEnd_CW1_CST3144",
-  // backend origin (useful if the frontend ever calls the API from same host)
-  "https://backend-cw1-cst3144-1.onrender.com",
-];
-
-
 
 const envOrigins = (process.env.ALLOWED_ORIGINS || "")
-  .split(",")
-  .map(s => s.trim())
-  .filter(Boolean);
+.split(",")
+.map(s => s.trim())
+.filter(Boolean);
 
 // Dev-friendly defaults when NODE_ENV !== "production"
 if (process.env.NODE_ENV !== "production") {
@@ -45,11 +33,11 @@ const corsOptions = {
   origin: (origin, callback) => {
     // allow requests with no origin (curl, server-to-server)
     if (!origin) return callback(null, true);
-
+    
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-
+    
     // don't throw an error here (that becomes a 500). Instead deny the origin:
     return callback(null, false);
   },
@@ -60,7 +48,22 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-// ensure preflight is handled with the same options
+
+
+
+
+/* essential note */
+// CORS: allow GH Pages frontend and Render backend, handle preflight quickly.
+// permit requests without Origin (curl, server-to-server)
+const allowedOrigins = [
+  "https://jm2359mdx.github.io",
+  "https://jm2359mdx.github.io/FrontEnd_CW1_CST3144",
+  // backend origin (useful if the frontend ever calls the API from same host)
+  "https://backend-cw1-cst3144-1.onrender.com",
+];
+
+
+
 
 
 // JSON body parsing (small body limit to guard against large payloads).

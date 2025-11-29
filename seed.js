@@ -3,7 +3,7 @@
 import "dotenv/config";
 import { connectDB, getDB, closeDB } from "./db.js";
 
-// sample lessons for initial database state
+// a collection for lesson information (minimal fields: topic, price, location, and space) 
 const lessons = [
   { subject: "Math", location: "London", price: 15, spaces: 8 },
   { subject: "English", location: "Leeds", price: 12, spaces: 5 },

@@ -94,8 +94,7 @@ app.use("/images", staticFiles);
 
 // ------------------------ ROUTES ------------------------
 
-// Return all lessons used by the front-end list and as a fallback for empty searches.
-// fetch all lessons
+// one GET route /lessons, which returns all the lessons as a Json, demonstrated with a Postman request 
 app.get("/lessons", async (req, res) => {
   try {
     const db = getDB();
@@ -145,14 +144,13 @@ app.get("/search", async (req, res) => {
   }
 });
 
-// Receive an order payload and persist it to the orders collection.
-// save new order
+// one POST route, which saves a new order to the “order” collection, demonstrated with a Postman request
 app.post("/orders", async (req, res) => {
   try {
     const db = getDB();
     const order = req.body;
 
-    // Basic validation to ensure required fields are present.
+    // a collection for order information 
     if (
       !order ||
       typeof order.name !== "string" ||
@@ -171,8 +169,7 @@ app.post("/orders", async (req, res) => {
   }
 });
 
-// Update any fields of a lesson document using $set; accepts ObjectId or string id.
-// update lesson by id
+// one PUT route, which can update any attribute in a lesson of the “lesson” collection
 app.put("/lessons/:id", async (req, res) => {
   try {
     const db = getDB();

@@ -1,4 +1,4 @@
-// static.js
+// a static file middleware that returns lesson images, or an error message if the image file does not exist;
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";

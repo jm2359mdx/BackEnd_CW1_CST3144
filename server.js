@@ -63,8 +63,12 @@ app.use((req, res, next) => {
   console.log("Request Method:", req.method);
   next();
 });
-
 app.use(cors(corsOptions));
+app.use(cors({
+  origin: '*',
+  credentials: false // MUST be false with wildcard
+}));
+
 
 // JSON body parsing (small body limit to guard against large payloads).
 app.use(

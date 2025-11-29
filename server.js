@@ -15,20 +15,29 @@ import { ObjectId } from "mongodb";
 // create server app
 const app = express();
 
-
+// Define allowedOrigins FIRST (before corsOptions)
 const envOrigins = (process.env.ALLOWED_ORIGINS || "")
-.split(",")
-.map(s => s.trim())
-.filter(Boolean);
+  .split(",")
+  .map(s => s.trim())
+  .filter(Boolean);
 
 // Dev-friendly defaults when NODE_ENV !== "production"
 if (process.env.NODE_ENV !== "production") {
   envOrigins.push("http://localhost:5173", "http://localhost:3000");
 }
 
-// Example: ALLOWED_ORIGINS="https://jm2359mdx.github.io,https://jm2359mdx.github.io/FrontEnd_CW1_CST3144,https://backend-cw1-cst3144-1.onrender.com"
-// const allowedOrigins = Array.from(new Set(envOrigins));
+/* essential note */
+// CORS: allow GH Pages frontend and Render backend, handle preflight quickly.
+// permit requests without Origin (curl, server-to-server)
+const allowedOrigins = Array.from(new Set([
+  "https://jm2359mdx.github.io",
+  "https://jm2359mdx.github.io/FrontEnd_CW1_CST3144",
+  "https://backend-cw1-cst3144-1.onrender.com",
+  ...envOrigins
+]));
 
+
+// Define corsOptions AFTER allowedOrigins
 const corsOptions = {
   origin: (origin, callback) => {
     // allow requests with no origin (curl, server-to-server)
@@ -38,29 +47,19 @@ const corsOptions = {
       return callback(null, true);
     }
     
-    // don't throw an error here (that becomes a 500). Instead deny the origin:
+    // Log blocked origins for debugging
+    console.warn(`CORS blocked origin: ${origin}`);
     return callback(null, false);
   },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
-  optionsSuccessStatus: 204, // older browsers like IE11
-  credentials: true, // set true only if you need cookies/auth and then don't use '*' origin
+  optionsSuccessStatus: 204,
+  credentials: true,
 };
 
 app.use(cors(corsOptions));
 
 
-
-
-/* essential note */
-// CORS: allow GH Pages frontend and Render backend, handle preflight quickly.
-// permit requests without Origin (curl, server-to-server)
-const allowedOrigins = [
-  "https://jm2359mdx.github.io",
-  "https://jm2359mdx.github.io/FrontEnd_CW1_CST3144",
-  // backend origin (useful if the frontend ever calls the API from same host)
-  "https://backend-cw1-cst3144-1.onrender.com",
-];
 
 
 

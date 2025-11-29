@@ -18,7 +18,7 @@ const app = express();
 // Define allowedOrigins FIRST (before corsOptions)
 const envOrigins = (process.env.ALLOWED_ORIGINS || "")
   .split(",")
-  .map(s => s.trim())
+  .map((s) => s.trim())
   .filter(Boolean);
 
 // Dev-friendly defaults when NODE_ENV !== "production"
@@ -29,24 +29,25 @@ if (process.env.NODE_ENV !== "production") {
 /* essential note */
 // CORS: allow GH Pages frontend and Render backend, handle preflight quickly.
 // permit requests without Origin (curl, server-to-server)
-const allowedOrigins = Array.from(new Set([
-  "https://jm2359mdx.github.io",
-  "https://jm2359mdx.github.io/FrontEnd_CW1_CST3144",
-  "https://backend-cw1-cst3144-1.onrender.com",
-  ...envOrigins
-]));
-
+const allowedOrigins = Array.from(
+  new Set([
+    "https://jm2359mdx.github.io",
+    "https://jm2359mdx.github.io/FrontEnd_CW1_CST3144",
+    "https://backend-cw1-cst3144-1.onrender.com",
+    ...envOrigins,
+  ])
+);
 
 // Define corsOptions AFTER allowedOrigins
 const corsOptions = {
   origin: (origin, callback) => {
     // allow requests with no origin (curl, server-to-server)
     if (!origin) return callback(null, true);
-    
+
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-    
+
     // Log blocked origins for debugging
     console.warn(`CORS blocked origin: ${origin}`);
     return callback(null, false);
@@ -57,13 +58,13 @@ const corsOptions = {
   credentials: true,
 };
 
+app.use((req, res, next) => {
+  console.log("Request Origin:", req.headers.origin);
+  console.log("Request Method:", req.method);
+  next();
+});
+
 app.use(cors(corsOptions));
-
-
-
-
-
-
 
 // JSON body parsing (small body limit to guard against large payloads).
 app.use(
